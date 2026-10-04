@@ -167,6 +167,30 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
 .legend-g i{width:12px;height:12px;border-radius:4px;border:1.5px solid var(--line);display:inline-block}
 .danger{color:var(--bad)}
 @media (max-width:420px){.brand small{display:none}.seg button{padding:6px 8px}}
+/* «Я задолбался» */
+.tired{position:fixed;z-index:15;display:grid;gap:10px}
+.tired .tbtn{border:0;cursor:pointer;font:700 17px/1.2 var(--sans);color:#fff;background:linear-gradient(160deg,#e0573f,#b8352c);border-radius:16px;padding:16px 14px;box-shadow:0 6px 18px rgba(184,53,44,.28);text-wrap:balance}
+.tired .tbtn:active{transform:translateY(1px) scale(.98)}
+.tired .tmsg{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.45;min-height:3.2em}
+.tired .tstat{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.tired .tstat ol{margin:2px 0 0;padding-left:18px}
+.tired .tstat button{justify-self:start;border:0;background:none;color:var(--accent);font:600 12.5px var(--sans);padding:0;cursor:pointer}
+.tired .tx{display:none}
+@media (min-width:1180px){
+  .tired{left:max(16px,calc((100vw - 760px)/2 - 244px));top:130px;width:220px}
+  .tired .tbtn{min-height:96px;font-size:20px;order:-1}
+}
+@media (max-width:1179px){
+  .tired{left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 24px));pointer-events:none}
+  .tired>*{pointer-events:auto}
+  .tired .tbtn{justify-self:start;padding:10px 14px;font-size:14px;border-radius:999px;order:3}
+  .tired .tcard{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.2);position:relative}
+  .tired .tcard .tmsg{border:0;padding:0 24px 0 0;min-height:0}
+  .tired .tcard[hidden]{display:none}
+  .tired .tx{display:block;position:absolute;right:6px;top:4px;border:0;background:none;color:var(--muted);font:600 20px var(--sans);cursor:pointer;padding:2px 8px}
+  .wrap{padding-block-end:96px}
+}
+@media (min-width:1180px){ .tired .tcard{display:grid;gap:10px} .tired .tcard[hidden]{display:grid} }
 @media (prefers-reduced-motion:no-preference){.prog i{transition:width .25s}.opt{transition:background .15s,border-color .15s}}
 </style>
 
@@ -183,6 +207,14 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
   <div class="chips" id="chips" role="group" aria-label="Глава"></div>
 </header>
 <main class="wrap" id="main"></main>
+<aside class="tired" id="tired" aria-label="Я задолбался">
+  <div class="tcard" id="tcard">
+    <button class="tx" id="tclose" aria-label="Закрыть">×</button>
+    <div class="tmsg" id="tmsg">Если совсем тяжело - жми. Я запишу, где это случилось, и что-нибудь скажу.</div>
+    <div class="tstat" id="tstat"></div>
+  </div>
+  <button class="tbtn" id="tbtn">Я задолбался</button>
+</aside>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
@@ -662,5 +694,88 @@ document.getElementById('m-learn').onclick = () => { state.mode='learn'; store.s
 document.getElementById('m-quiz').onclick = () => { state.mode='quiz'; store.set('mode','quiz'); quiz=null; render(); };
 document.getElementById('m-map').onclick = () => { state.mode='map'; store.set('mode','map'); mapSel=null; render(); window.scrollTo({top:0}); };
 document.getElementById('m-task').onclick = () => { state.mode='task'; store.set('mode','task'); taskLesson=null; render(); };
+// ---- «Я задолбался»: трекинг и поддержка ----
+const TIRED_LINES = [
+  'Ты справишься.',
+  'Тебе нужна эта работа.',
+  'Плюсы требуются в high-frequency trading. Ты уже знаешь C++, подтянуть несложно.',
+  'Ещё один вопрос - и можно выдохнуть.',
+  'Пять минут. Один урок. Потом перерыв.',
+  'Сегодняшний урок - это завтрашний ответ на собеседовании.',
+  'Дедлок - это когда все ждут. Не жди, сделай одну задачу.',
+  'Мьютекс тоже не всегда берётся с первого раза. Отпусти и попробуй снова.',
+  'Ты уже написал агентов, RAG и балансировщик. Многопоточность - не страшнее.',
+  'Интервьюер тоже когда-то путал acquire и release.',
+  'Сложно - значит, это как раз то, что спросят.',
+  'Встань, пройдись, попей воды. Вопрос подождёт, он никуда не денется.',
+  'join() всегда дожидается. Ты тоже дождёшься оффера.',
+  'Каждый правильный ответ здесь - минус одна ошибка на собесе.',
+  'Не обязательно всё понять сегодня. Обязательно - не бросить.',
+  'TSan находит гонки. Ты находишь работу. Оба доводят дело до конца.',
+  'Пропусти этот вопрос и вернись к нему вечером. Так тоже можно.',
+  'Ты сам захотел учить по-честному. Это уже больше, чем делает большинство.',
+  'Нормально, что тяжело. Это и есть момент, когда голова учится.',
+  'Сделай самую маленькую следующую вещь: прочитай один абзац.',
+  'C++ знают меньше людей, чем Python. Это твоё преимущество.',
+  'Рынок тяжёлый, но собеседования идут. Ты в игре.',
+  'Код, который ты сейчас не понимаешь, через неделю будешь объяснять другим.',
+  'Перерыв - это не unlock() навсегда. Это sleep_for(10min).',
+  'Ты справлялся с вещами потруднее, чем condition_variable.',
+  'Компилятор тоже сначала ругается, а потом собирает.',
+  'Здесь никто не смотрит на время. Важно только дойти.',
+  'Работа найдётся. Подготовка делает так, чтобы нашлась хорошая.',
+  'Главное в многопоточности - не скорость, а корректность. В подготовке так же.',
+];
+const TIRED_DYN = [
+  p => `Уже сделано ${p.pct}%. Осталось меньше, чем кажется.`,
+  p => `Сделано ${p.done} из ${p.total}. Каждый следующий шаг легче.`,
+  (p, n) => n >= 10 ? `Это ${n}-е нажатие. Признаю: тема правда тяжёлая. Продолжай.` : null,
+  (p, n, today) => today >= 3 ? `Сегодня уже ${today} раз. Может, перерыв на 15 минут?` : null,
+];
+let tiredLog = store.get('tired', []);
+let tiredLast = -1;
+function tiredWhere(){
+  const vis = el => { const r = el.getBoundingClientRect(); return r.bottom > 80 && r.top < innerHeight; };
+  if(state.mode==='quiz' && quiz && quiz.qs[quiz.i]){ const q = quiz.qs[quiz.i]; return {kind:'quiz', id:q.id, lesson:q.lesson}; }
+  if(state.mode==='task'){ const d = [...document.querySelectorAll('details[data-tid][open]')].find(vis); if(d){ const ch = BOOK.chapters.find(c=>c.id===state.chap); const t = (ch.tasks||[]).find(x=>x.id===d.dataset.tid); return {kind:'task', id:d.dataset.tid, lesson:t&&t.lesson}; } }
+  if(state.mode==='learn'){ const d = [...document.querySelectorAll('details.lesson[data-id][open]')].find(vis); if(d) return {kind:'lesson', id:d.dataset.id, lesson:d.dataset.id}; }
+  return {kind:state.mode, id:null, lesson:typeof mapSel==='string'?mapSel:null};
+}
+function tiredStats(){
+  const el = document.getElementById('tstat');
+  if(!tiredLog.length){ el.innerHTML = ''; return; }
+  const day = new Date().toDateString();
+  const today = tiredLog.filter(e => new Date(e.t).toDateString()===day).length;
+  const by = {};
+  for(const e of tiredLog) if(e.lesson) by[e.lesson] = (by[e.lesson]||0)+1;
+  const top = Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  el.innerHTML = `<span>Нажато ${tiredLog.length} · сегодня ${today}</span>` +
+    (top.length ? `<span>Чаще всего на уроках:</span><ol>${top.map(([id,n])=>`<li>${inl(lessonTitle(id))} - ${n}</li>`).join('')}</ol>` : '') +
+    `<button id="tcopy">Скопировать данные</button>`;
+  document.getElementById('tcopy').onclick = () => {
+    const txt = JSON.stringify(tiredLog);
+    const done = () => { document.getElementById('tcopy').textContent = 'Скопировано'; };
+    try{ navigator.clipboard.writeText(txt).then(done, () => tiredMsg(txt)); }catch(e){ tiredMsg(txt); }
+  };
+}
+function tiredMsg(t){ document.getElementById('tmsg').textContent = t; }
+document.getElementById('tbtn').onclick = () => {
+  const w = tiredWhere();
+  tiredLog.push({t:Date.now(), mode:state.mode, chap:state.chap, kind:w.kind, id:w.id, lesson:w.lesson});
+  if(tiredLog.length > 5000) tiredLog = tiredLog.slice(-5000);
+  store.set('tired', tiredLog);
+  const day = new Date().toDateString();
+  const today = tiredLog.filter(e => new Date(e.t).toDateString()===day).length;
+  const b = bookProg(), p = {done:b.done, total:b.total, pct:b.total?Math.round(100*b.done/b.total):0};
+  let line = null;
+  if(Math.random() < 0.3){ const f = TIRED_DYN[Math.floor(Math.random()*TIRED_DYN.length)]; line = f(p, tiredLog.length, today); }
+  if(!line){ let k; do{ k = Math.floor(Math.random()*TIRED_LINES.length); }while(k===tiredLast && TIRED_LINES.length>1); tiredLast = k; line = TIRED_LINES[k]; }
+  tiredMsg(line);
+  document.getElementById('tcard').hidden = false;
+  tiredStats();
+};
+document.getElementById('tclose').onclick = () => { document.getElementById('tcard').hidden = true; };
+if(matchMedia('(max-width:1179px)').matches) document.getElementById('tcard').hidden = true;
+tiredStats();
 render();
 </script>
