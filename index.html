@@ -596,6 +596,7 @@ function renderQuiz(){
   const main = document.getElementById('main');
   if(!quiz || (quiz.opts.chap!==state.chap && !quiz.opts.lesson)) startQuiz({chap:state.chap});
   const q = quiz.qs[quiz.i];
+  if(q && quiz.shownId!==q.id){ quiz.shownId = q.id; quiz.shownAt = Date.now(); }
   const nWrong = pool({chap:state.chap, onlyWrong:true}).length;
   const scope = quiz.opts.lesson ? 'Урок: '+lessonTitle(quiz.opts.lesson) : (quiz.opts.onlyWrong ? 'Только ошибки' : (state.chap==='all'?'Все главы вперемешку':(BOOK.chapters.find(c=>c.id===state.chap)||{}).title));
   const head = `<div class="qbar"><span class="stat">${quiz.qs.length ? Math.min(quiz.i+1,quiz.qs.length)+' / '+quiz.qs.length+' · верно '+quiz.right : '0 вопросов'}</span>
@@ -699,8 +700,6 @@ const TIRED_LINES = [
   'Ты справишься.',
   'Тебе нужна эта работа.',
   'Плюсы требуются в high-frequency trading. Ты уже знаешь C++, подтянуть несложно.',
-  'Ещё один вопрос - и можно выдохнуть.',
-  'Пять минут. Один урок. Потом перерыв.',
   'Сегодняшний урок - это завтрашний ответ на собеседовании.',
   'Дедлок - это когда все ждут. Не жди, сделай одну задачу.',
   'Мьютекс тоже не всегда берётся с первого раза. Отпусти и попробуй снова.',
@@ -712,10 +711,8 @@ const TIRED_LINES = [
   'Каждый правильный ответ здесь - минус одна ошибка на собесе.',
   'Не обязательно всё понять сегодня. Обязательно - не бросить.',
   'TSan находит гонки. Ты находишь работу. Оба доводят дело до конца.',
-  'Пропусти этот вопрос и вернись к нему вечером. Так тоже можно.',
   'Ты сам захотел учить по-честному. Это уже больше, чем делает большинство.',
   'Нормально, что тяжело. Это и есть момент, когда голова учится.',
-  'Сделай самую маленькую следующую вещь: прочитай один абзац.',
   'C++ знают меньше людей, чем Python. Это твоё преимущество.',
   'Рынок тяжёлый, но собеседования идут. Ты в игре.',
   'Код, который ты сейчас не понимаешь, через неделю будешь объяснять другим.',
@@ -726,6 +723,15 @@ const TIRED_LINES = [
   'Работа найдётся. Подготовка делает так, чтобы нашлась хорошая.',
   'Главное в многопоточности - не скорость, а корректность. В подготовке так же.',
 ];
+const TIRED_BY_MODE = {
+  learn: ['Сделай самую маленькую следующую вещь: прочитай один абзац.', 'Пять минут. Один урок. Потом перерыв.',
+          'Не понял абзац - запусти пример под ним и посмотри, что выведет.'],
+  quiz:  ['Ещё один вопрос - и можно выдохнуть.', 'Не знаешь - выбери наугад и прочитай объяснение. Это тоже учёба.',
+          'Ошибки в тесте бесплатные. На собеседовании - нет. Ошибайся здесь.'],
+  task:  ['Запусти то, что уже есть. Ошибка компилятора - тоже подсказка.', 'Открой подсказку. Это не стыдно.',
+          'Пропусти это задание и вернись к нему вечером. Так тоже можно.'],
+  map:   ['Выбери на карте самый маленький урок и закрой его.', 'Карта большая, но идти по ней можно по одному узлу.'],
+};
 const TIRED_DYN = [
   p => `Уже сделано ${p.pct}%. Осталось меньше, чем кажется.`,
   p => `Сделано ${p.done} из ${p.total}. Каждый следующий шаг легче.`,
@@ -733,12 +739,14 @@ const TIRED_DYN = [
   (p, n, today) => today >= 3 ? `Сегодня уже ${today} раз. Может, перерыв на 15 минут?` : null,
 ];
 let tiredLog = store.get('tired', []);
+const pageT0 = Date.now(), openedAt = {};   // когда открыт урок/задание
+document.addEventListener('toggle', e => { const d = e.target; if(d.open && d.dataset){ const k = d.dataset.tid || d.dataset.id; if(k) openedAt[k] = Date.now(); } }, true);
 let tiredLast = -1;
 function tiredWhere(){
   const vis = el => { const r = el.getBoundingClientRect(); return r.bottom > 80 && r.top < innerHeight; };
-  if(state.mode==='quiz' && quiz && quiz.qs[quiz.i]){ const q = quiz.qs[quiz.i]; return {kind:'quiz', id:q.id, lesson:q.lesson}; }
-  if(state.mode==='task'){ const d = [...document.querySelectorAll('details[data-tid][open]')].find(vis); if(d){ const ch = BOOK.chapters.find(c=>c.id===state.chap); const t = (ch.tasks||[]).find(x=>x.id===d.dataset.tid); return {kind:'task', id:d.dataset.tid, lesson:t&&t.lesson}; } }
-  if(state.mode==='learn'){ const d = [...document.querySelectorAll('details.lesson[data-id][open]')].find(vis); if(d) return {kind:'lesson', id:d.dataset.id, lesson:d.dataset.id}; }
+  if(state.mode==='quiz' && quiz && quiz.qs[quiz.i]){ const q = quiz.qs[quiz.i]; return {kind:'quiz', id:q.id, lesson:q.lesson, since:quiz.shownAt, answered:quiz.answered}; }
+  if(state.mode==='task'){ const d = [...document.querySelectorAll('details[data-tid][open]')].find(vis); if(d){ const ch = BOOK.chapters.find(c=>c.id===state.chap); const t = (ch.tasks||[]).find(x=>x.id===d.dataset.tid); return {kind:'task', id:d.dataset.tid, lesson:t&&t.lesson, since:openedAt[d.dataset.tid]}; } }
+  if(state.mode==='learn'){ const d = [...document.querySelectorAll('details.lesson[data-id][open]')].find(vis); if(d) return {kind:'lesson', id:d.dataset.id, lesson:d.dataset.id, since:openedAt[d.dataset.id]}; }
   return {kind:state.mode, id:null, lesson:typeof mapSel==='string'?mapSel:null};
 }
 function tiredStats(){
@@ -761,7 +769,12 @@ function tiredStats(){
 function tiredMsg(t){ document.getElementById('tmsg').textContent = t; }
 document.getElementById('tbtn').onclick = () => {
   const w = tiredWhere();
-  tiredLog.push({t:Date.now(), mode:state.mode, chap:state.chap, kind:w.kind, id:w.id, lesson:w.lesson});
+  const now = Date.now(), prev = tiredLog[tiredLog.length-1];
+  tiredLog.push({t:now, tz:-new Date().getTimezoneOffset(), mode:state.mode, chap:state.chap, kind:w.kind, id:w.id, lesson:w.lesson,
+    onItemSec: w.since ? Math.round((now-w.since)/1000) : null,     // сколько сидел на этом вопросе/задании/уроке
+    answered: w.answered ?? null,                                    // тест: уже ответил на вопрос или ещё нет
+    sessionMin: Math.round((now-pageT0)/60000),                      // сколько минут открыта страница
+    sincePrevMin: prev ? Math.round((now-prev.t)/60000) : null});
   if(tiredLog.length > 5000) tiredLog = tiredLog.slice(-5000);
   store.set('tired', tiredLog);
   const day = new Date().toDateString();
@@ -769,7 +782,8 @@ document.getElementById('tbtn').onclick = () => {
   const b = bookProg(), p = {done:b.done, total:b.total, pct:b.total?Math.round(100*b.done/b.total):0};
   let line = null;
   if(Math.random() < 0.3){ const f = TIRED_DYN[Math.floor(Math.random()*TIRED_DYN.length)]; line = f(p, tiredLog.length, today); }
-  if(!line){ let k; do{ k = Math.floor(Math.random()*TIRED_LINES.length); }while(k===tiredLast && TIRED_LINES.length>1); tiredLast = k; line = TIRED_LINES[k]; }
+  if(!line){ const pool = TIRED_LINES.concat(TIRED_BY_MODE[state.mode]||[]);
+    let k; do{ k = Math.floor(Math.random()*pool.length); }while(pool[k]===tiredLast && pool.length>1); tiredLast = pool[k]; line = pool[k]; }
   tiredMsg(line);
   document.getElementById('tcard').hidden = false;
   tiredStats();
