@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Плюсы к Яндекс ID</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -121,6 +122,47 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
 .hint{background:var(--tip-soft);border-radius:10px;padding:9px 12px;font-size:15px}
 .sett{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;font-size:14px}
 .sett input{font:400 13px var(--mono);padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+
+/* progress + roadmap */
+.lmeta.ok{color:var(--ok)} .lmeta.part{color:var(--accent)} .lmeta.skip{color:var(--muted);text-decoration:line-through}
+.dash{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px}
+@media (max-width:440px){.dash{grid-template-columns:1fr;justify-items:center}}
+.donut{width:150px;height:150px}
+.donut text{fill:var(--ink);font-family:var(--mono)}
+.legend{display:grid;gap:7px;font-size:14px;width:100%}
+.legend .r{display:flex;gap:8px;align-items:center}
+.legend .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.legend .n{margin-left:auto;font:500 13px var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.cbars{display:grid;gap:8px;margin:14px 0 4px}
+.cbar{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;background:none;border:0;padding:0;text-align:left;color:var(--ink);font:500 14px var(--sans);cursor:pointer}
+.cbar .t{height:6px;border-radius:6px;background:var(--sunk);overflow:hidden;grid-column:1/-1}
+.cbar .t i{display:block;height:100%;background:var(--ok)}
+.cbar .n{font:500 12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.cbar[aria-current="true"]{color:var(--accent)}
+.graph{position:relative;margin-top:14px;padding-block:6px 10px}
+.graph svg.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.graph svg.edges path{fill:none;stroke:var(--line);stroke-width:1.6}
+.graph svg.edges path.done{stroke:var(--ok)}
+.lvl{display:flex;justify-content:center;gap:8px;margin-bottom:26px;position:relative;z-index:1}
+.node{flex:1 1 0;max-width:150px;min-width:0;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:7px 6px 6px;font:600 12px/1.25 var(--sans);cursor:pointer;display:grid;gap:5px;text-align:center}
+.node .nb{height:4px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.node .nb i{display:block;height:100%;background:var(--accent)}
+.node .nc{font:500 10px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.node.ok{border-color:var(--ok);background:var(--ok-soft)} .node.ok .nb i{background:var(--ok)}
+.node.part{border-color:var(--accent)}
+.node.skip{border-style:dashed;opacity:.55}
+.node.sel{outline:2px solid var(--accent);outline-offset:2px}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.18);border-radius:16px 16px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;max-width:760px;margin:0 auto}
+.sheet h3{margin:0;font-size:17px;text-wrap:balance;padding-right:36px}
+.sheet .x{position:absolute;right:10px;top:8px;border:0;background:none;color:var(--muted);font:600 22px var(--sans);cursor:pointer;padding:4px 8px}
+.srow{display:flex;justify-content:space-between;font-size:15px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.srow b{font:600 14px var(--mono)}
+.sbtns{display:flex;gap:8px;flex-wrap:wrap}
+.legend-g{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.legend-g span{display:inline-flex;gap:5px;align-items:center}
+.legend-g i{width:12px;height:12px;border-radius:4px;border:1.5px solid var(--line);display:inline-block}
+.danger{color:var(--bad)}
+@media (max-width:420px){.brand small{display:none}.seg button{padding:6px 8px}}
 @media (prefers-reduced-motion:no-preference){.prog i{transition:width .25s}.opt{transition:background .15s,border-color .15s}}
 </style>
 
@@ -128,6 +170,7 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
   <div class="row">
     <div class="brand">C++ <small>Яндекс ID</small></div>
     <div class="seg" role="group" aria-label="Режим">
+      <button id="m-map" aria-pressed="false">Карта</button>
       <button id="m-learn" aria-pressed="true">Уроки</button>
       <button id="m-quiz" aria-pressed="false">Тест</button>
       <button id="m-task" aria-pressed="false">Практика</button>
@@ -279,6 +322,7 @@ function renderChips(){
   document.getElementById('m-learn').setAttribute('aria-pressed', state.mode==='learn');
   document.getElementById('m-quiz').setAttribute('aria-pressed', state.mode==='quiz');
   document.getElementById('m-task').setAttribute('aria-pressed', state.mode==='task');
+  document.getElementById('m-map').setAttribute('aria-pressed', state.mode==='map');
 }
 function block(b){
   if(b.type==='p') return `<p>${inl(b.text)}</p>`;
@@ -288,6 +332,162 @@ function block(b){
   if(b.type==='tip') return `<div class="callout tip"><b>Сказать вслух</b>${inl(b.text)}</div>`;
   return '';
 }
+
+// ---------- progress ----------
+// short label + prerequisites for the roadmap graph
+const ROAD = {
+  'mt-thread':['std::thread',[]], 'mt-race':['Гонки',['mt-thread']], 'mt-mutex':['mutex и локи',['mt-race']],
+  'mt-deadlock':['Дедлоки',['mt-mutex']], 'mt-shared':['RW lock',['mt-mutex']], 'mt-condvar':['condition_variable',['mt-mutex']],
+  'mt-atomic':['atomic, CAS',['mt-race']], 'mt-memory':['memory_order',['mt-atomic']], 'mt-once':['call_once, TLS',['mt-mutex','mt-atomic']],
+  'mt-jthread':['jthread',['mt-thread','mt-condvar']], 'mt-cpp20sync':['latch, barrier, sem',['mt-condvar']],
+  'mt-monitor':['Монитор',['mt-condvar']], 'mt-future':['future, promise',['mt-condvar']],
+  'mt-queue':['Очередь',['mt-monitor']], 'mt-channel':['Каналы',['mt-queue']], 'mt-pool':['Пул потоков',['mt-queue','mt-future']],
+  'mt-tasks-sync':['Задачи: синхр.',['mt-cpp20sync','mt-jthread']], 'mt-tasks-service':['Задачи: сервисы',['mt-shared','mt-monitor']],
+  'mt-primitives':['Карта примитивов',['mt-cpp20sync','mt-once','mt-memory']],
+  'mt-checklist':['Чек-лист',['mt-tasks-sync','mt-tasks-service','mt-primitives','mt-pool','mt-channel','mt-deadlock']],
+  'tests-anatomy':['Анатомия gtest',[]], 'tests-assert':['EXPECT / ASSERT',['tests-anatomy']], 'tests-fixtures':['Фикстуры',['tests-assert']],
+  'tests-param':['Параметры',['tests-assert']], 'tests-matchers':['Матчеры',['tests-assert']], 'tests-mocks':['gmock',['tests-fixtures','tests-matchers']],
+  'tests-time':['Время, рандом',['tests-mocks']], 'tests-mt':['Многопоточные',['tests-fixtures']], 'tests-integration':['Интеграционные',['tests-fixtures']],
+  'tests-example':['Разбор SessionStore',['tests-mocks','tests-time','tests-param']], 'tests-checklist':['Чек-лист',['tests-example','tests-integration','tests-mt']],
+  'modern-versions':['Стандарты',[]], 'modern-move':['Move',['modern-versions']], 'modern-seq':['vector, deque, list',['modern-versions']],
+  'modern-syntax':['Синтаксис 17/20',['modern-versions']], 'modern-smart':['Умные указатели',['modern-move']], 'modern-vocab':['optional, variant',['modern-move']],
+  'modern-assoc':['map, unordered',['modern-seq']], 'modern-views':['string_view, span',['modern-seq']], 'modern-lambda':['Лямбды',['modern-syntax']],
+  'modern-concepts':['Concepts',['modern-syntax']], 'modern-misc':['<=>, format…',['modern-syntax']], 'modern-algo':['Алгоритмы',['modern-seq','modern-lambda']],
+  'modern-ranges':['Ranges',['modern-algo','modern-views']], 'modern-review1':['Ревью 1',['modern-assoc','modern-views','modern-algo']],
+  'modern-review2':['Ревью 2',['modern-smart','modern-vocab','modern-review1']], 'modern-checklist':['Чек-лист',['modern-review2','modern-ranges','modern-concepts','modern-misc']]
+};
+let readSet = new Set(store.get('read', []));
+let qright = new Set(store.get('qright', []));
+let skipSet = new Set(store.get('skip', []));
+function saveProgress(){ store.set('read',[...readSet]); store.set('qright',[...qright]); store.set('skip',[...skipSet]); store.set('solved',[...solved]); store.set('wrongs',[...wrongs]); }
+function lessonProg(ch, id){
+  const qs = ch.quiz.filter(q => q.lesson===id), ts = (ch.tasks||[]).filter(t => t.lesson===id);
+  const p = {read: readSet.has(id)?1:0, q: qs.filter(q => qright.has(q.id)).length, qn: qs.length,
+             t: ts.filter(t => solved.has(t.id)).length, tn: ts.length, skip: skipSet.has(id)};
+  p.done = p.read + p.q + p.t; p.total = 1 + p.qn + p.tn;
+  p.status = p.skip ? 'skip' : p.done===p.total ? 'ok' : p.done>0 ? 'part' : 'none';
+  return p;
+}
+function chapProg(ch){
+  const r = {done:0,total:0,read:0,readN:0,q:0,qn:0,t:0,tn:0,lessons:0,lessonsOk:0,skipped:0};
+  for(const l of ch.lessons){
+    const p = lessonProg(ch, l.id);
+    if(p.skip){ r.skipped++; continue; }
+    r.done+=p.done; r.total+=p.total; r.read+=p.read; r.readN++; r.q+=p.q; r.qn+=p.qn; r.t+=p.t; r.tn+=p.tn;
+    r.lessons++; if(p.status==='ok') r.lessonsOk++;
+  }
+  return r;
+}
+function bookProg(){
+  const r = {done:0,total:0,read:0,readN:0,q:0,qn:0,t:0,tn:0,lessons:0,lessonsOk:0,skipped:0};
+  for(const ch of BOOK.chapters){ const c = chapProg(ch); for(const k in r) r[k]+=c[k]; }
+  return r;
+}
+function lessonMeta(ch, id){
+  const p = lessonProg(ch, id);
+  if(p.status==='skip') return ['skip','пропуск'];
+  if(p.status==='ok') return ['ok','✓ готово'];
+  return [p.status==='part'?'part':'', p.done+'/'+p.total];
+}
+function donut(r){
+  const R=58, C=2*Math.PI*R, f = r.total ? r.done/r.total : 0;
+  const pct = Math.round(f*100);
+  return `<svg class="donut" viewBox="0 0 150 150" role="img" aria-label="Сделано ${pct}%">
+    <circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--sunk)" stroke-width="18"/>
+    <circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--ok)" stroke-width="18" stroke-linecap="${f>0&&f<1?'round':'butt'}"
+      stroke-dasharray="${(C*f).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 75 75)"/>
+    <text x="75" y="78" text-anchor="middle" font-size="30" font-weight="700">${pct}%</text>
+    <text x="75" y="100" text-anchor="middle" font-size="11" style="fill:var(--muted)">${r.done} из ${r.total}</text>
+  </svg>`;
+}
+let mapSel = null;
+function renderMap(){
+  const ch = BOOK.chapters.find(c => c.id===state.chap) || BOOK.chapters[0];
+  const b = bookProg();
+  const main = document.getElementById('main');
+  const levels = {};
+  const lvl = id => { if(levels[id]!=null) return levels[id]; const deps=(ROAD[id]||['',[]])[1].filter(d=>ch.lessons.some(l=>l.id===d)); return levels[id] = deps.length ? 1+Math.max(...deps.map(lvl)) : 0; };
+  const rows = [];
+  ch.lessons.forEach(l => { const k=lvl(l.id); (rows[k]=rows[k]||[]).push(l); });
+  main.innerHTML = `<h1>Прогресс</h1>
+    <div class="dash">${donut(b)}
+      <div class="legend">
+        <div class="r"><i class="sw" style="background:var(--ok)"></i>Сделано<span class="n">${b.done}</span></div>
+        <div class="r"><i class="sw" style="background:var(--sunk)"></i>Осталось<span class="n">${b.total-b.done}</span></div>
+        <div class="r" style="border-top:1px solid var(--line);padding-top:7px">Уроки прочитаны<span class="n">${b.read}/${b.readN}</span></div>
+        <div class="r">Вопросы теста верно<span class="n">${b.q}/${b.qn}</span></div>
+        <div class="r">Задания решены<span class="n">${b.t}/${b.tn}</span></div>
+        ${b.skipped?`<div class="r" style="color:var(--muted)">Пропущено уроков<span class="n">${b.skipped}</span></div>`:''}
+      </div></div>
+    <div class="cbars">${BOOK.chapters.map(c => { const r=chapProg(c), f=r.total?r.done/r.total:0;
+      return `<button class="cbar" data-c="${c.id}" aria-current="${c.id===ch.id}"><span>${esc(c.title)}</span><span class="n">${Math.round(f*100)}% · уроков ${r.lessonsOk}/${r.lessons}</span><span class="t"><i style="width:${(f*100).toFixed(1)}%"></i></span></button>`; }).join('')}</div>
+    <div class="legend-g"><span><i style="background:var(--ok-soft);border-color:var(--ok)"></i>готово</span><span><i style="border-color:var(--accent)"></i>начато</span><span><i></i>не начато</span><span><i style="border-style:dashed"></i>пропущено</span></div>
+    <div class="graph" id="graph"><svg class="edges" id="edges"></svg>
+      ${rows.map(r => `<div class="lvl">${r.map(l => { const p=lessonProg(ch,l.id);
+        return `<button class="node ${p.status} ${mapSel===l.id?'sel':''}" data-n="${l.id}" title="${esc(l.title)}">
+          <span>${esc((ROAD[l.id]||[l.title])[0])}</span><span class="nb"><i style="width:${(100*p.done/p.total).toFixed(0)}%"></i></span><span class="nc">${p.done}/${p.total}</span></button>`; }).join('')}</div>`).join('')}
+    </div>
+    <div class="lfoot" style="margin-top:8px"><button class="btn" id="p-reset">Сбросить прогресс</button></div>
+    <div id="sheet-slot"></div>`;
+  main.querySelectorAll('.cbar').forEach(x => x.onclick = () => { state.chap = x.dataset.c; store.set('chap', state.chap); mapSel=null; render(); });
+  main.querySelectorAll('.node').forEach(x => x.onclick = () => { mapSel = x.dataset.n; main.querySelectorAll('.node').forEach(n=>n.classList.toggle('sel', n===x)); openSheet(ch, mapSel); });
+  const rb = document.getElementById('p-reset');
+  rb.onclick = () => {
+    if(rb.dataset.arm){ readSet.clear(); qright.clear(); skipSet.clear(); solved.clear(); wrongs.clear(); saveProgress(); render(); return; }
+    rb.dataset.arm = 1; rb.textContent = 'Точно сбросить? Нажмите ещё раз'; rb.classList.add('danger');
+    setTimeout(() => { if(rb.isConnected){ delete rb.dataset.arm; rb.textContent='Сбросить прогресс'; rb.classList.remove('danger'); } }, 4000);
+  };
+  drawEdges(ch);
+  if(mapSel) openSheet(ch, mapSel);
+}
+function drawEdges(ch){
+  const g = document.getElementById('graph'), svg = document.getElementById('edges');
+  if(!g) return;
+  const gb = g.getBoundingClientRect(), pos = {};
+  g.querySelectorAll('.node').forEach(n => { const r = n.getBoundingClientRect(); pos[n.dataset.n] = {x:r.left-gb.left+r.width/2, top:r.top-gb.top, bot:r.bottom-gb.top}; });
+  let paths = '';
+  for(const l of ch.lessons){
+    for(const d of (ROAD[l.id]||['',[]])[1]){
+      const a = pos[d], b = pos[l.id]; if(!a || !b) continue;
+      const my = (a.bot + b.top)/2, done = lessonProg(ch, d).status==='ok';
+      paths += `<path class="${done?'done':''}" d="M${a.x.toFixed(1)} ${a.bot.toFixed(1)} C${a.x.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${b.top.toFixed(1)}"/>`;
+    }
+  }
+  svg.innerHTML = paths;
+}
+window.addEventListener('resize', () => { if(state.mode==='map'){ const ch = BOOK.chapters.find(c => c.id===state.chap) || BOOK.chapters[0]; drawEdges(ch); } });
+function goLesson(lid){
+  const ch = BOOK.chapters.find(c => c.lessons.some(l => l.id===lid));
+  state.mode='learn'; state.chap=ch.id; store.set('mode','learn'); store.set('chap',ch.id); render();
+  const d = document.querySelector(`details.lesson[data-id="${lid}"]`); if(d){ d.open=true; d.scrollIntoView({block:'start'}); }
+}
+function openSheet(ch, id){
+  const l = ch.lessons.find(x => x.id===id), p = lessonProg(ch, id);
+  const slot = document.getElementById('sheet-slot');
+  slot.innerHTML = `<div class="sheet" role="dialog" aria-label="${esc(l.title)}">
+    <button class="x" id="sh-x" aria-label="Закрыть">×</button>
+    <h3>${inl(l.title)}</h3>
+    <div class="srow"><span>Урок прочитан</span><b>${p.read?'да':'нет'}</b></div>
+    <div class="srow"><span>Тест: верных ответов</span><b>${p.q}/${p.qn}</b></div>
+    <div class="srow"><span>Практика: решено</span><b>${p.t}/${p.tn}</b></div>
+    <div class="sbtns">
+      <button class="btn primary" id="sh-open">Открыть урок</button>
+      ${p.qn?'<button class="btn" id="sh-quiz">Тест</button>':''}
+      ${p.tn?'<button class="btn" id="sh-task">Практика</button>':''}
+    </div>
+    <div class="sbtns">
+      <button class="btn" id="sh-read">${p.read?'Снять «прочитано»':'Отметить прочитанным'}</button>
+      <button class="btn" id="sh-skip">${p.skip?'Вернуть в план':'Пропустить урок'}</button>
+    </div></div>`;
+  const on = (i,f) => { const e=document.getElementById(i); if(e) e.onclick=f; };
+  on('sh-x', () => { mapSel=null; slot.innerHTML=''; document.querySelectorAll('.node.sel').forEach(n=>n.classList.remove('sel')); });
+  on('sh-open', () => { mapSel=null; goLesson(id); });
+  on('sh-quiz', () => { mapSel=null; state.mode='quiz'; store.set('mode','quiz'); startQuiz({chap:ch.id, lesson:id}); render(); window.scrollTo({top:0}); });
+  on('sh-task', () => { mapSel=null; state.mode='task'; store.set('mode','task'); taskLesson=id; render(); window.scrollTo({top:0}); });
+  on('sh-read', () => { readSet.has(id)?readSet.delete(id):readSet.add(id); saveProgress(); renderMap(); });
+  on('sh-skip', () => { skipSet.has(id)?skipSet.delete(id):skipSet.add(id); saveProgress(); renderMap(); });
+}
+
 function renderLearn(){
   const ch = BOOK.chapters.find(c => c.id===state.chap) || BOOK.chapters[0];
   const qcount = id => ch.quiz.filter(q => q.lesson===id).length;
@@ -295,7 +495,7 @@ function renderLearn(){
   main.innerHTML = `<h1>${esc(ch.title)}</h1><p class="lede">${ch.lessons.length} уроков · ${ch.quiz.length} вопросов в тесте${(ch.tasks||[]).length ? ' · '+ch.tasks.length+' заданий' : ''}</p>
   <div class="toc">${ch.lessons.map((l,i)=>`
     <details class="lesson" data-id="${l.id}">
-      <summary><span class="lnum">${String(i+1).padStart(2,'0')}</span><span class="ltitle">${inl(l.title)}</span><span class="lmeta">${qcount(l.id)?qcount(l.id)+' в.':''}</span></summary>
+      <summary><span class="lnum">${String(i+1).padStart(2,'0')}</span><span class="ltitle">${inl(l.title)}</span>${(m => `<span class="lmeta ${m[0]}">${m[1]}</span>`)(lessonMeta(ch, l.id))}</summary>
       <div class="lbody" data-fill="${i}"></div>
     </details>`).join('')}</div>`;
   main.querySelectorAll('details.lesson').forEach(d => d.addEventListener('toggle', () => {
@@ -303,11 +503,16 @@ function renderLearn(){
     if(d.open && !body.dataset.done){
       const l = ch.lessons[+body.dataset.fill];
       const tcount = (ch.tasks||[]).filter(t => t.lesson===l.id).length;
-      const foot = (qcount(l.id) ? `<button class="btn primary" data-l="${l.id}">Тест по уроку · ${qcount(l.id)}</button>` : '') +
+      const foot = `<button class="btn" data-r="${l.id}">${readSet.has(l.id)?'✓ Прочитано':'Отметить прочитанным'}</button>` +
+                   (qcount(l.id) ? `<button class="btn primary" data-l="${l.id}">Тест по уроку · ${qcount(l.id)}</button>` : '') +
                    (tcount ? `<button class="btn" data-t="${l.id}">Практика · ${tcount}</button>` : '');
       body.innerHTML = l.blocks.map(block).join('') + (foot ? `<div class="lfoot">${foot}</div>` : '');
       body.dataset.done = 1;
       initRunnables(body);
+      const rbn = body.querySelector('[data-r]');
+      rbn.onclick = () => { readSet.has(l.id)?readSet.delete(l.id):readSet.add(l.id); saveProgress();
+        rbn.textContent = readSet.has(l.id)?'✓ Прочитано':'Отметить прочитанным';
+        const m = lessonMeta(ch, l.id), lm = d.querySelector('.lmeta'); lm.className='lmeta '+m[0]; lm.textContent=m[1]; };
       const tb = body.querySelector('[data-t]');
       if(tb) tb.onclick = () => { state.mode='task'; store.set('mode','task'); taskLesson = l.id; render(); window.scrollTo({top:0}); };
       const b = body.querySelector('[data-l]');
@@ -365,8 +570,8 @@ function renderQuiz(){
   main.querySelectorAll('.opt[data-k]').forEach(b => b.onclick = () => {
     if(quiz.answered) return;
     quiz.pick = +b.dataset.k; quiz.answered = true;
-    if(quiz.pick===q.answer){ quiz.right++; wrongs.delete(q.id); } else wrongs.add(q.id);
-    store.set('wrongs',[...wrongs]); renderQuiz();
+    if(quiz.pick===q.answer){ quiz.right++; wrongs.delete(q.id); qright.add(q.id); } else { wrongs.add(q.id); qright.delete(q.id); }
+    saveProgress(); renderQuiz();
   });
   const on = (id,f) => { const e=document.getElementById(id); if(e) e.onclick=f; };
   on('q-next', () => { quiz.i++; quiz.answered=false; quiz.pick=null; renderQuiz(); window.scrollTo({top:0}); });
@@ -424,9 +629,10 @@ function renderTasks(){
     };
   }));
 }
-function render(){ renderChips(); if(state.mode==='learn') renderLearn(); else if(state.mode==='task') renderTasks(); else renderQuiz(); }
+function render(){ renderChips(); if(state.mode==='learn') renderLearn(); else if(state.mode==='task') renderTasks(); else if(state.mode==='map') renderMap(); else renderQuiz(); }
 document.getElementById('m-learn').onclick = () => { state.mode='learn'; store.set('mode','learn'); render(); };
 document.getElementById('m-quiz').onclick = () => { state.mode='quiz'; store.set('mode','quiz'); quiz=null; render(); };
+document.getElementById('m-map').onclick = () => { state.mode='map'; store.set('mode','map'); mapSel=null; render(); window.scrollTo({top:0}); };
 document.getElementById('m-task').onclick = () => { state.mode='task'; store.set('mode','task'); taskLesson=null; render(); };
 render();
 </script>
