@@ -856,6 +856,11 @@ function renderTech(){
   main.innerHTML = `<div class="tech"><h1>Тех: поминутный лог</h1>
     <p class="lede">Что и когда ты делал в книге: открытые уроки и задания, ответы в тестах, запуски кода, «Я задолбался». Одна строка — одна минута. Хранится только в этом браузере.</p>
     <div class="lfoot"><button class="btn" id="tx-copy">Скопировать текстом</button><button class="btn" id="tx-json">Скопировать JSON</button></div>
+    <div class="sett"><b>Перенос между устройствами</b>
+      <span>Файл с прогрессом (прочитанное, тесты, решённые задания, черновики кода) и логами.</span>
+      <div class="lfoot" style="justify-content:flex-start"><button class="btn" id="tx-export">Экспорт в файл</button><button class="btn" id="tx-import">Импорт из файла</button></div>
+      <input type="file" id="tx-file" accept=".json,application/json" hidden>
+      <span id="tx-msg">Импорт объединяет: прогресс и логи с обоих устройств складываются, а черновики и настройки на этом устройстве не перезаписываются.</span></div>
     ${days.length ? days.map(d => `<section class="day"><div class="dh"><b>${esc(d.title)}</b><span>активных минут: ${d.active}</span></div>
       <p class="blk">${esc(d.blocks.join(' · '))}</p>
       ${d.lines.map(l => (l.gap > GAP_MIN ? `<div class="gap">перерыв ${l.gap} мин</div>` : '') + `<div class="ev"><time>${l.time}</time><span>${l.text}</span></div>`).join('')}
@@ -864,6 +869,41 @@ function renderTech(){
     try{ navigator.clipboard.writeText(txt).then(done, () => { b.textContent = 'Не вышло'; }); }catch(e){ b.textContent = 'Не вышло'; } };
   document.getElementById('tx-copy').onclick = () => copy('tx-copy', techText());
   document.getElementById('tx-json').onclick = () => copy('tx-json', JSON.stringify(actLog));
+  document.getElementById('tx-export').onclick = exportBook;
+  const file = document.getElementById('tx-file');
+  document.getElementById('tx-import').onclick = () => file.click();
+  file.onchange = () => { const f = file.files[0]; if(!f) return; const r = new FileReader();
+    r.onload = () => { const m = document.getElementById('tx-msg');
+      try{ const n = importBook(JSON.parse(r.result)); m.textContent = `Импортировано: ${n} записей. Обновляю страницу…`; setTimeout(() => location.reload(), 900); }
+      catch(e){ m.textContent = 'Не вышло: ' + e.message; } };
+    r.readAsText(f); };
+}
+// ---------- экспорт / импорт всего состояния книги ----------
+const PFX = 'cppbook:';
+function bookKeys(){ const ks = []; try{ for(let i=0; i<localStorage.length; i++){ const k = localStorage.key(i); if(k && k.startsWith(PFX)) ks.push(k.slice(PFX.length)); } }catch(e){} return ks; }
+function exportBook(){
+  const data = {}; for(const k of bookKeys()) data[k] = store.get(k, null);
+  const blob = new Blob([JSON.stringify({app:'cppbook', v:1, exported:new Date().toISOString(), data}, null, 1)], {type:'application/json'});
+  const d = new Date(), pad = n => String(n).padStart(2,'0');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `cpp-prep-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importBook(obj){
+  if(!obj || obj.app!=='cppbook' || typeof obj.data!=='object') throw new Error('это не файл книги');
+  let n = 0;
+  for(const [k, v] of Object.entries(obj.data)){
+    const cur = store.get(k, null);
+    if(Array.isArray(v) && v.length && typeof v[0]==='object' && v[0] && 't' in v[0]){   // логи: склеить, без дублей, по времени
+      const seen = new Set(), out = [];
+      for(const e of (Array.isArray(cur)?cur:[]).concat(v)){ const key = JSON.stringify(e); if(!seen.has(key)){ seen.add(key); out.push(e); } }
+      out.sort((a,b) => a.t-b.t); n += out.length - (Array.isArray(cur)?cur.length:0); store.set(k, out);
+    } else if(Array.isArray(v)){                                                               // множества id: объединить
+      const out = [...new Set((Array.isArray(cur)?cur:[]).concat(v))]; n += out.length - (Array.isArray(cur)?cur.length:0); store.set(k, out);
+    } else if(cur===null){ store.set(k, v); n++; }                                             // черновики, настройки: только если своих нет
+  }
+  const qr = new Set(store.get('qright', [])); store.set('wrongs', store.get('wrongs', []).filter(id => !qr.has(id)));
+  return n;
 }
 // ---- тропа до собеседования (справа) ----
 const SVGNS = 'http://www.w3.org/2000/svg';
