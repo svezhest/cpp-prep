@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Плюсы к Яндекс ID</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -140,6 +141,14 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
 .badge.ok{background:var(--ok-soft);color:var(--ok)}
 .tlist{display:grid;gap:12px;margin-top:6px}
 .hint{background:var(--tip-soft);border-radius:10px;padding:9px 12px;font-size:15px}
+.tech .day{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0}
+.tech .dh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:6px}
+.tech .dh b{font-size:16px} .tech .dh span{font-size:13px;color:var(--muted)}
+.tech .blk{font:500 12.5px var(--mono);color:var(--muted);margin:0 0 8px}
+.tech .ev{display:grid;grid-template-columns:3.4em 1fr;gap:8px;font-size:14px;padding:2px 0}
+.tech .ev time{font:600 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.tech .gap{font-size:12px;color:var(--muted);text-align:center;margin:6px 0;border-top:1px dashed var(--line);padding-top:4px}
+.tech .ok{color:var(--ok)} .tech .bad{color:var(--bad)}
 .sett{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;font-size:14px}
 .sett input{font:400 13px var(--mono);padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
 
@@ -182,7 +191,7 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
 .legend-g span{display:inline-flex;gap:5px;align-items:center}
 .legend-g i{width:12px;height:12px;border-radius:4px;border:1.5px solid var(--line);display:inline-block}
 .danger{color:var(--bad)}
-@media (max-width:420px){.brand small{display:none}.seg button{padding:6px 8px}}
+@media (max-width:420px){.brand small{display:none}.seg button{padding:6px 7px;font-size:12.5px}}
 /* «Я задолбался» */
 .tired{position:fixed;z-index:15;display:grid;gap:10px}
 .tired .tbtn{border:0;cursor:pointer;font:700 17px/1.2 var(--sans);color:#fff;background:linear-gradient(160deg,#e0573f,#b8352c);border-radius:16px;padding:16px 14px;box-shadow:0 6px 18px rgba(184,53,44,.28);text-wrap:balance}
@@ -254,6 +263,7 @@ textarea.ed{width:100%;min-height:120px;resize:vertical;background:var(--code-bg
       <button id="m-learn" aria-pressed="true">Уроки</button>
       <button id="m-quiz" aria-pressed="false">Тест</button>
       <button id="m-task" aria-pressed="false">Практика</button>
+      <button id="m-tech" aria-pressed="false">Тех</button>
     </div>
   </div>
   <div class="chips" id="chips" role="group" aria-label="Глава"></div>
@@ -411,11 +421,21 @@ function showResult(out, res, w, over){
     if(!body.trim()) body = '(пустой вывод)';
   }
   out.className = 'out '+cls;
+  act('run', {id: w.task ? w.task.id : null, ok: hasCheck ? !!v.pass : (res.build_ok && !res.tsan && res.exit===0)});
   out.innerHTML = `<span class="h">${esc(head)} · ${(res.ms/1000).toFixed(1)} с</span>${esc(body)}`;
   if(w.task && v.pass){ solved.add(w.task.id); saveProgress();
     const card = out.closest('details[data-tid]'); if(card){ const bd=card.querySelector('.tstate'); if(bd){ bd.className='badge ok tstate'; bd.textContent='решено'; } } }
 }
 
+// ---------- поминутный лог активности (вкладка «Тех») ----------
+let actLog = store.get('act', []);
+function act(k, extra){
+  actLog.push(Object.assign({t:Date.now(), k, chap:(typeof state!=='undefined'&&state)?state.chap:null}, extra||{}));
+  if(actLog.length > 20000) actLog = actLog.slice(-20000);
+  store.set('act', actLog);
+}
+document.addEventListener('toggle', e => { const d = e.target;
+  if(d.open && d.dataset && (d.dataset.tid || d.dataset.id)) act(d.dataset.tid ? 'task' : 'lesson', {id: d.dataset.tid || d.dataset.id}); }, true);
 const ALL = {id:'all', title:'Все главы'};
 let state = { mode: store.get('mode','learn'), chap: store.get('chap', BOOK.chapters[0].id) };
 let wrongs = new Set(store.get('wrongs', []));
@@ -433,6 +453,7 @@ function renderChips(){
   document.getElementById('m-quiz').setAttribute('aria-pressed', state.mode==='quiz');
   document.getElementById('m-task').setAttribute('aria-pressed', state.mode==='task');
   document.getElementById('m-map').setAttribute('aria-pressed', state.mode==='map');
+  document.getElementById('m-tech').setAttribute('aria-pressed', state.mode==='tech');
 }
 function block(b){
   if(b.type==='p') return `<p>${inl(b.text)}</p>`;
@@ -723,6 +744,7 @@ function renderQuiz(){
     if(quiz.answered) return;
     quiz.pick = +b.dataset.k; quiz.answered = true;
     if(quiz.pick===q.answer){ quiz.right++; wrongs.delete(q.id); qright.add(q.id); } else { wrongs.add(q.id); qright.delete(q.id); }
+    act('quiz', {id:q.id, lesson:q.lesson, ok: quiz.pick===q.answer});
     saveProgress(); renderQuiz();
   });
   const on = (id,f) => { const e=document.getElementById(id); if(e) e.onclick=f; };
@@ -786,11 +808,63 @@ function renderTasks(){
     };
   }));
 }
-function render(){ renderChips(); document.body.classList.toggle('advscope', !!(BOOK.chapters.find(c => c.id===state.chap)||{}).advanced); if(state.mode==='learn') renderLearn(); else if(state.mode==='task') renderTasks(); else if(state.mode==='map') renderMap(); else renderQuiz(); }
+function render(){ renderChips(); document.body.classList.toggle('advscope', !!(BOOK.chapters.find(c => c.id===state.chap)||{}).advanced); if(state.mode==='learn') renderLearn(); else if(state.mode==='task') renderTasks(); else if(state.mode==='map') renderMap(); else if(state.mode==='tech') renderTech(); else renderQuiz(); }
 document.getElementById('m-learn').onclick = () => { state.mode='learn'; store.set('mode','learn'); render(); };
 document.getElementById('m-quiz').onclick = () => { state.mode='quiz'; store.set('mode','quiz'); quiz=null; render(); };
 document.getElementById('m-map').onclick = () => { state.mode='map'; store.set('mode','map'); mapSel=null; render(); window.scrollTo({top:0}); };
 document.getElementById('m-task').onclick = () => { state.mode='task'; store.set('mode','task'); taskLesson=null; render(); };
+document.getElementById('m-tech').onclick = () => { state.mode='tech'; store.set('mode','tech'); render(); window.scrollTo({top:0}); };
+function actTitle(id){ for(const ch of BOOK.chapters){ const l = ch.lessons.find(x=>x.id===id); if(l) return (ROAD[id]||[l.title])[0];
+  const t = (ch.tasks||[]).find(x=>x.id===id); if(t) return t.title; } return id||''; }
+function actLines(evs){   // события одной минуты -> одна строка
+  const parts = [], quiz = {ok:0, bad:0, l:new Set()}, runs = {ok:0, bad:0, ids:new Set()};
+  for(const e of evs){
+    if(e.k==='quiz'){ e.ok?quiz.ok++:quiz.bad++; if(e.lesson) quiz.l.add(actTitle(e.lesson)); }
+    else if(e.k==='run'){ e.ok?runs.ok++:runs.bad++; if(e.id) runs.ids.add(actTitle(e.id)); }
+    else if(e.k==='lesson') parts.push('урок: '+esc(actTitle(e.id)));
+    else if(e.k==='task') parts.push('задание: '+esc(actTitle(e.id)));
+    else if(e.k==='tired') parts.push('«Я задолбался»');
+    else if(e.k==='visit') parts.push('открыл книгу');
+  }
+  const okbad = o => `${o.ok?`<span class="ok">✓${o.ok}</span>`:''}${o.ok&&o.bad?' ':''}${o.bad?`<span class="bad">✗${o.bad}</span>`:''}`;
+  if(quiz.ok+quiz.bad) parts.push(`тест ${okbad(quiz)}${quiz.l.size?' · '+esc([...quiz.l].join(', ')):''}`);
+  if(runs.ok+runs.bad) parts.push(`запуск ${okbad(runs)}${runs.ids.size?' · '+esc([...runs.ids].join(', ')):''}`);
+  return [...new Set(parts)].join('; ');
+}
+const GAP_MIN = 20;
+function techDays(){
+  const pad = n => String(n).padStart(2,'0'), hm = d => pad(d.getHours())+':'+pad(d.getMinutes());
+  const days = new Map();
+  for(const e of actLog){ const d = new Date(e.t), key = d.toDateString(); if(!days.has(key)) days.set(key, []); days.get(key).push(e); }
+  return [...days.entries()].sort((a,b)=>b[1][0].t-a[1][0].t).map(([key, evs]) => {
+    const mins = new Map();
+    for(const e of evs){ const m = Math.floor(e.t/60000); if(!mins.has(m)) mins.set(m, []); mins.get(m).push(e); }
+    const ms = [...mins.keys()].sort((a,b)=>a-b), blocks = [];
+    for(const m of ms){ const b = blocks[blocks.length-1]; if(b && m-b[1] <= GAP_MIN) b[1] = m; else blocks.push([m,m]); }
+    const d0 = new Date(evs[0].t);
+    return {title: d0.toLocaleDateString('ru-RU',{weekday:'short', day:'numeric', month:'long'}), active: ms.length,
+      blocks: blocks.map(([a,b]) => `${hm(new Date(a*60000))}–${hm(new Date(b*60000))} (${b-a+1} мин)`),
+      lines: ms.map((m,i) => ({m, time: hm(new Date(m*60000)), gap: i ? m-ms[i-1] : 0, text: actLines(mins.get(m))}))};
+  });
+}
+function techText(){
+  return techDays().map(d => `${d.title} · активных минут ${d.active}\n${d.blocks.join(', ')}\n` +
+    d.lines.map(l => (l.gap > GAP_MIN ? `  — перерыв ${l.gap} мин —\n` : '') + `${l.time}  ${l.text.replace(/<[^>]+>/g,'')}`).join('\n')).join('\n\n');
+}
+function renderTech(){
+  const main = document.getElementById('main'), days = techDays();
+  main.innerHTML = `<div class="tech"><h1>Тех: поминутный лог</h1>
+    <p class="lede">Что и когда ты делал в книге: открытые уроки и задания, ответы в тестах, запуски кода, «Я задолбался». Одна строка — одна минута. Хранится только в этом браузере.</p>
+    <div class="lfoot"><button class="btn" id="tx-copy">Скопировать текстом</button><button class="btn" id="tx-json">Скопировать JSON</button></div>
+    ${days.length ? days.map(d => `<section class="day"><div class="dh"><b>${esc(d.title)}</b><span>активных минут: ${d.active}</span></div>
+      <p class="blk">${esc(d.blocks.join(' · '))}</p>
+      ${d.lines.map(l => (l.gap > GAP_MIN ? `<div class="gap">перерыв ${l.gap} мин</div>` : '') + `<div class="ev"><time>${l.time}</time><span>${l.text}</span></div>`).join('')}
+    </section>`).join('') : '<p class="empty">Пока пусто. Лог начинается с этой версии книги.</p>'}</div>`;
+  const copy = (id, txt) => { const b = document.getElementById(id), done = () => { b.textContent = 'Скопировано'; };
+    try{ navigator.clipboard.writeText(txt).then(done, () => { b.textContent = 'Не вышло'; }); }catch(e){ b.textContent = 'Не вышло'; } };
+  document.getElementById('tx-copy').onclick = () => copy('tx-copy', techText());
+  document.getElementById('tx-json').onclick = () => copy('tx-json', JSON.stringify(actLog));
+}
 // ---- тропа до собеседования (справа) ----
 const SVGNS = 'http://www.w3.org/2000/svg';
 let trailPrev = null;
@@ -945,6 +1019,7 @@ document.getElementById('tbtn').onclick = () => {
     sincePrevMin: prev ? Math.round((now-prev.t)/60000) : null});
   if(tiredLog.length > 5000) tiredLog = tiredLog.slice(-5000);
   store.set('tired', tiredLog);
+  act('tired');
   const day = new Date().toDateString();
   const today = tiredLog.filter(e => new Date(e.t).toDateString()===day).length;
   const b = bookProg(), p = {done:b.done, total:b.total, pct:b.total?Math.round(100*b.done/b.total):0};
@@ -959,6 +1034,7 @@ document.getElementById('tbtn').onclick = () => {
 document.getElementById('tclose').onclick = () => { document.getElementById('tcard').hidden = true; };
 if(matchMedia('(max-width:1179px)').matches) document.getElementById('tcard').hidden = true;
 tiredStats();
+act('visit');
 render();
 drawTrail();
 </script>
